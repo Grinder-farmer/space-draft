@@ -6,11 +6,9 @@ import plotly.graph_objects as go
 from datetime import datetime as dt_datetime, timezone
 import itertools
 
-# --- НАСТРОЙКА СТРАНИЦЫ ---
 st.set_page_config(page_title="Sat Simulator", layout="wide")
 st.title("🛰️ Симулятор ориентации спутника")
 
-# --- КЭШИРОВАНИЕ ЗАГРУЗКИ SKYFIELD ---
 @st.cache_resource
 def load_skyfield_data():
     ts = load.timescale()
@@ -21,7 +19,6 @@ ts, eph = load_skyfield_data()
 earth = eph['earth']
 sun = eph['sun']
 
-# --- МАТЕМАТИКА ---
 def solve_sun_vector_body(I_sb, I_max, n_panels):
     s_sun_un = np.zeros(3)
     active_panels = 0
@@ -94,7 +91,6 @@ def create_cube_mesh(center, dims, rotation_matrix, color, opacity=1.0, name='Bo
     k = [1, 2, 6, 7, 5, 4, 6, 5, 7, 6, 4, 7]
     return go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=opacity, flatshading=True, name=name, showscale=False)
 
-# --- ИНТЕРФЕЙС ---
 st.sidebar.header("Параметры симуляции")
 
 use_current_time = st.sidebar.checkbox("Использовать текущее время", value=True)
@@ -245,4 +241,5 @@ if st.session_state['calculated']:
 
         max_range = np.max(SAT_DIMS) * 2
         fig.update_layout(scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='black', aspectmode='data'), margin=dict(l=0, r=0, b=0, t=0), height=700)
+
         st.plotly_chart(fig, use_container_width=True)
