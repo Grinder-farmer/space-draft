@@ -150,8 +150,8 @@ if st.sidebar.button("Запустить симуляцию"):
         panel_ids = sorted(list(I_sb_current.keys()))
         face_names = list(possible_axes.keys())
 
-        nadir_axis_name = "-Z"
-        nadir_axis_vec = np.array([0, 0, -1])
+        nadir_axis_name = "+X"
+        nadir_axis_vec = np.array([1, 0, 0])
         for panel_face_indices in itertools.permutations(range(len(face_names)), len(panel_ids)):
                 
             panel_config_hyp = {pid: possible_axes[face_names[face_idx]] for pid, face_idx in zip(panel_ids, panel_face_indices)}
