@@ -240,22 +240,6 @@ if st.session_state['calculated']:
         fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
 
         max_range = np.max(SAT_DIMS) * 2
-        camera = dict(
-    eye=dict(x=1.5, y=1.5, z=1.5), 
-    center=dict(x=0, y=0, z=0),
-    up=dict(x=0, y=0, z=1)
-)
-        fig.update_layout(
-    scene=dict(
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False),
-        zaxis=dict(visible=False),
-        bgcolor='black',
-        aspectmode='data',
-        camera=camera, # Добавляем камеру сюда
-    ),
-    margin=dict(l=0, r=0, b=0, t=0),
-    height=700
-)
+        fig.update_layout(scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='black', aspectmode='data'), margin=dict(l=0, r=0, b=0, t=0), height=700)
 
         st.plotly_chart(fig, use_container_width=True)
