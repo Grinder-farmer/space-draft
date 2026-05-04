@@ -90,6 +90,22 @@ def create_cube_mesh(center, dims, rotation_matrix, color, opacity=1.0, name='Bo
     j = [2, 3, 5, 6, 1, 5, 2, 6, 3, 7, 0, 4]
     k = [1, 2, 6, 7, 5, 4, 6, 5, 7, 6, 4, 7]
     return go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=opacity, flatshading=True, name=name, showscale=False)
+    
+def create_earth_sphere(center, radius, color='green', opacity=0.8, resolution=30):
+    u = np.linspace(0, 2 * np.pi, resolution)
+    v = np.linspace(0, np.pi, resolution)
+    
+    x = radius * np.outer(np.cos(u), np.sin(v)) + center[0]
+    y = radius * np.outer(np.sin(u), np.sin(v)) + center[1]
+    z = radius * np.outer(np.ones_like(u), np.cos(v)) + center[2]
+
+    return go.Surface(
+        x=x, y=y, z=z,
+        colorscale=[[0, color], [1, color]],
+        opacity=opacity,
+        showscale=False,
+        name='Earth'
+    )
 
 st.sidebar.header("Параметры симуляции")
 
@@ -236,7 +252,9 @@ if st.session_state['calculated']:
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
         
         earth_dist = np.max(SAT_DIMS) * 8
-        fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[-earth_dist], mode='markers+text', marker=dict(size=40, color='green', symbol='circle'), text=["EARTH"], textposition="bottom center", name="Earth"))
+        earth_radius = np.max(SAT_DIMS) * 3
+        earth_center = np.array([0, 0, -earth_dist])
+        fig.add_trace(create_earth_sphere(earth_center, earth_radius))
         fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
 
         max_range = np.max(SAT_DIMS) * 4
