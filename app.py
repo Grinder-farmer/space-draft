@@ -239,7 +239,17 @@ if st.session_state['calculated']:
         fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[-earth_dist], mode='markers+text', marker=dict(size=40, color='green', symbol='circle'), text=["EARTH"], textposition="bottom center", name="Earth"))
         fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
 
-        max_range = np.max(SAT_DIMS) * 2
-        fig.update_layout(scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False), bgcolor='black', aspectmode='data'), margin=dict(l=0, r=0, b=0, t=0), height=700)
+        max_range = np.max(SAT_DIMS) * 4
+        fig.update_layout(
+    scene=dict(
+        xaxis=dict(range=[-max_range, max_range], visible=False),
+        yaxis=dict(range=[-max_range, max_range], visible=False),
+        zaxis=dict(range=[-max_range, max_range], visible=False),
+        aspectmode='cube',
+        bgcolor='black'
+    ),
+    margin=dict(l=0, r=0, b=0, t=0),
+    height=700
+)
 
         st.plotly_chart(fig, use_container_width=True)
