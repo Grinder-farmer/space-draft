@@ -257,7 +257,7 @@ if st.session_state['calculated']:
         fig.add_trace(create_earth_sphere(earth_center, earth_radius))
         fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
 
-        max_range = np.max(SAT_DIMS) * 4
+        max_range = earth_dist + earth_radius + np.max(SAT_DIMS)
         fig.update_layout(
     scene=dict(
         xaxis=dict(range=[-max_range, max_range], visible=False),
