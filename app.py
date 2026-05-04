@@ -150,6 +150,7 @@ if st.sidebar.button("Запустить симуляцию"):
         panel_ids = sorted(list(I_sb_current.keys()))
         face_names = list(possible_axes.keys())
 
+        # for nadir_axis_name, nadir_axis_vec in possible_axes.items():
         nadir_axis_name = "+X"
         nadir_axis_vec = np.array([1, 0, 0])
         for panel_face_indices in itertools.permutations(range(len(face_names)), len(panel_ids)):
