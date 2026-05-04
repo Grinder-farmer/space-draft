@@ -150,49 +150,50 @@ if st.sidebar.button("Запустить симуляцию"):
         panel_ids = sorted(list(I_sb_current.keys()))
         face_names = list(possible_axes.keys())
 
-        for nadir_axis_name, nadir_axis_vec in possible_axes.items():
-            for panel_face_indices in itertools.permutations(range(len(face_names)), len(panel_ids)):
+        nadir_axis_name = "-Z"
+        nadir_axis_vec = np.array([0, 0, -1])
+        for panel_face_indices in itertools.permutations(range(len(face_names)), len(panel_ids)):
                 
-                panel_config_hyp = {pid: possible_axes[face_names[face_idx]] for pid, face_idx in zip(panel_ids, panel_face_indices)}
+            panel_config_hyp = {pid: possible_axes[face_names[face_idx]] for pid, face_idx in zip(panel_ids, panel_face_indices)}
                 
-                impossible_physics = False
-                current_threshold = 0.005 
+            impossible_physics = False
+            current_threshold = 0.005 
                 
-                active_panels_list = []
-                for pid, vec in panel_config_hyp.items():
-                    if I_sb_current[pid] > current_threshold:
-                        active_panels_list.append(vec)
+            active_panels_list = []
+            for pid, vec in panel_config_hyp.items():
+                if I_sb_current[pid] > current_threshold:
+                    active_panels_list.append(vec)
                 
-                for v1 in active_panels_list:
-                    for v2 in active_panels_list:
-                        if np.dot(v1, v2) < -0.9: 
-                            impossible_physics = True
-                            break
-                    if impossible_physics: break
+            for v1 in active_panels_list:
+                for v2 in active_panels_list:
+                    if np.dot(v1, v2) < -0.9: 
+                        impossible_physics = True
+                        break
+                if impossible_physics: break
                 
-                if impossible_physics:
-                    continue 
+            if impossible_physics:
+                continue 
 
-                try:
-                    s_sun_body_hyp = solve_sun_vector_body(I_sb_current, I_max_panel, panel_config_hyp)
-                    if s_sun_body_hyp is None: continue
-                    attitude_matrix_hyp = calculate_attitude_triad_final(nadir_axis_vec, s_sun_body_hyp, nadir_global, s_sun_global)
-                    s_sun_global_in_body = attitude_matrix_hyp.T @ s_sun_global
-                    consistency_score = np.dot(s_sun_body_hyp, s_sun_global_in_body)
+            try:
+                s_sun_body_hyp = solve_sun_vector_body(I_sb_current, I_max_panel, panel_config_hyp)
+                if s_sun_body_hyp is None: continue
+                attitude_matrix_hyp = calculate_attitude_triad_final(nadir_axis_vec, s_sun_body_hyp, nadir_global, s_sun_global)
+                s_sun_global_in_body = attitude_matrix_hyp.T @ s_sun_global
+                consistency_score = np.dot(s_sun_body_hyp, s_sun_global_in_body)
                     
-                    if consistency_score > 0.98:
-                        config_desc = f"Надир:{nadir_axis_name} | Панели:" + ",".join([f"{face_names[idx]}" for idx in panel_face_indices])
+                if consistency_score > 0.98:
+                    config_desc = f"Надир:{nadir_axis_name} | Панели:" + ",".join([f"{face_names[idx]}" for idx in panel_face_indices])
                         
-                        found_hypotheses.append({
-                            'score': consistency_score,
-                            'attitude': attitude_matrix_hyp,
-                            'nadir_axis': nadir_axis_name,
-                            'panel_config': panel_config_hyp,
-                            'desc_full': config_desc,
-                            'desc_short': f"Надир: {nadir_axis_name} | Панели: " + ", ".join([face_names[idx] for idx in panel_face_indices])
-                        })
-                except ValueError:
-                    continue
+                    found_hypotheses.append({
+                        'score': consistency_score,
+                        'attitude': attitude_matrix_hyp,
+                        'nadir_axis': nadir_axis_name,
+                        'panel_config': panel_config_hyp,
+                        'desc_full': config_desc,
+                        'desc_short': f"Надир: {nadir_axis_name} | Панели: " + ", ".join([face_names[idx] for idx in panel_face_indices])
+                    })
+            except ValueError:
+                continue
         
         unique_hypotheses = []
         seen_configs = set()
