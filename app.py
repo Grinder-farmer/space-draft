@@ -253,15 +253,15 @@ if st.session_state['calculated']:
         sun_vec_scaled = sun_vector_in_scene * axis_len * 1.5
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
         
-        EARTH_RADIUS = 6371
         ORBIT_ALT = 550
         earth_radius = EARTH_RADIUS
-        earth_center = np.array([0, 0, - (EARTH_RADIUS + ORBIT_ALT)])
-        scene_scale = 1.0
+        EARTH_SCALE = 5.0
+        earth_radius = np.max(SAT_DIMS) * 8 * EARTH_SCALE
+        earth_center = np.array([0, 0, -earth_radius * 2.5])
         fig.add_trace(
             create_earth_sphere(
-                earth_center * scene_scale,
-                earth_radius * scene_scale,
+                earth_center,
+                earth_radius,
                 color='royalblue',
                 opacity=0.7
             )
@@ -277,7 +277,7 @@ if st.session_state['calculated']:
             )
         )
 
-        max_range = 10
+        max_range = earth_radius * 0.6
         fig.update_layout(
             scene=dict(
                 xaxis=dict(range=[-max_range, max_range], visible=False),
@@ -286,7 +286,7 @@ if st.session_state['calculated']:
                 aspectmode='cube',
                 bgcolor='black',
                 camera=dict(
-                    eye=dict(x=2.5, y=2.5, z=2.0)  # красивый изометрический вид
+                    eye=dict(x=2.2, y=2.2, z=1.6)
                 )
             ),
             margin=dict(l=0, r=0, b=0, t=0),
