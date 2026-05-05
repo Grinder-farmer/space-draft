@@ -253,48 +253,23 @@ if st.session_state['calculated']:
         sun_vec_scaled = sun_vector_in_scene * axis_len * 1.5
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
 
-        dome_radius = np.max(SAT_DIMS) * 25  
-        dome_center_z = -dome_radius * 1.5
-        u = np.linspace(0, 2 * np.pi, 40)
-        v = np.linspace(0, np.pi / 2, 20)  
-        x = dome_radius * np.outer(np.cos(u), np.sin(v))
-        y = dome_radius * np.outer(np.sin(u), np.sin(v))
-        z = -dome_radius * np.outer(np.ones_like(u), np.cos(v)) + dome_center_z
-        fig.add_trace(go.Surface(
-            x=x,
-            y=y,
-            z=z,
-            colorscale=[[0, "#1f4e79"], [1, "#0b1c2c"]],
-            opacity=0.12,
-            showscale=False,
-            name="Earth Dome"
-        ))
+        earth_dist = np.max(SAT_DIMS) * 8
+        earth_radius = np.max(SAT_DIMS) * 3
+        earth_center = np.array([0, 0, -earth_dist])
+        fig.add_trace(create_earth_sphere(earth_center, earth_radius))
+        fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
 
-        fig.add_trace(go.Scatter3d(
-            x=[0, 0],
-            y=[0, 0],
-            z=[0, -dome_radius],
-            mode='lines',
-            line=dict(color='deepskyblue', width=3, dash='dot'),
-            showlegend=False,
-            name="Nadir"
-        ))
-        
+        max_range = earth_dist + earth_radius + np.max(SAT_DIMS)
         fig.update_layout(
-            scene=dict(
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-                zaxis=dict(visible=False),
-                aspectmode='data',
-                bgcolor='black'
-            ),
-            scene_camera=dict(
-                eye=dict(x=2.2, y=2.2, z=1.6),  # камера "над спутником"
-                center=dict(x=0, y=0, z=0),
-                up=dict(x=0, y=0, z=1)
-            ),
-            margin=dict(l=0, r=0, b=0, t=0),
-            height=700
-        )
+    scene=dict(
+        xaxis=dict(range=[-max_range, max_range], visible=False),
+        yaxis=dict(range=[-max_range, max_range], visible=False),
+        zaxis=dict(range=[-max_range, max_range], visible=False),
+        aspectmode='cube',
+        bgcolor='black'
+    ),
+    margin=dict(l=0, r=0, b=0, t=0),
+    height=700
+)
 
         st.plotly_chart(fig, use_container_width=True)
