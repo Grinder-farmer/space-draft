@@ -134,7 +134,7 @@ if 'calculated' not in st.session_state:
 if 'hypotheses' not in st.session_state:
     st.session_state['hypotheses'] = []
 
-if st.sidebar.button("Запустить симуляцию"):
+if st.sidebar.button("Запустить симуляцию") or not st.session_state.get("calculated", False):
     st.session_state['calculated'] = True
     with st.spinner('Вычисляем варианты ориентации...'):
         sat_lat, sat_lon, sat_alt = find_coords_for_sun_angle(target_angle, time_utc)
