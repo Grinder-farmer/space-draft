@@ -253,13 +253,13 @@ if st.session_state['calculated']:
         sun_vec_scaled = sun_vector_in_scene * axis_len * 1.5
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
         
-        EARTH_SCALE = 5.0
-        earth_radius = np.max(SAT_DIMS) * 8 * EARTH_SCALE
-        earth_center = np.array([0, 0, -earth_radius * 2.5])
+        EARTH_RADIUS = 10.0
+        ORBIT_DISTANCE = 22.0
+        earth_center = np.array([0, 0, -ORBIT_DISTANCE])
         fig.add_trace(
             create_earth_sphere(
                 earth_center,
-                earth_radius,
+                EARTH_RADIUS,
                 color='royalblue',
                 opacity=0.7
             )
@@ -275,16 +275,17 @@ if st.session_state['calculated']:
             )
         )
 
-        max_range = earth_radius * 0.6
+        MAX_RANGE = 12
         fig.update_layout(
             scene=dict(
-                xaxis=dict(range=[-max_range, max_range], visible=False),
-                yaxis=dict(range=[-max_range, max_range], visible=False),
-                zaxis=dict(range=[-max_range, max_range], visible=False),
+                xaxis=dict(range=[-MAX_RANGE, MAX_RANGE], visible=False),
+                yaxis=dict(range=[-MAX_RANGE, MAX_RANGE], visible=False),
+                zaxis=dict(range=[-MAX_RANGE, MAX_RANGE], visible=False),
                 aspectmode='cube',
                 bgcolor='black',
                 camera=dict(
-                    eye=dict(x=2.2, y=2.2, z=1.6)
+                    eye=dict(x=2.2, y=2.2, z=1.6),
+                    center=dict(x=0, y=0, z=0)
                 )
             ),
             margin=dict(l=0, r=0, b=0, t=0),
