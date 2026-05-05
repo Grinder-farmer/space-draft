@@ -254,7 +254,6 @@ if st.session_state['calculated']:
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
         
         ORBIT_ALT = 550
-        earth_radius = EARTH_RADIUS
         EARTH_SCALE = 5.0
         earth_radius = np.max(SAT_DIMS) * 8 * EARTH_SCALE
         earth_center = np.array([0, 0, -earth_radius * 2.5])
