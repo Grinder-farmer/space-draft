@@ -254,11 +254,12 @@ if st.session_state['calculated']:
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
 
         dome_radius = np.max(SAT_DIMS) * 25  
+        dome_center_z = -dome_radius * 1.5
         u = np.linspace(0, 2 * np.pi, 40)
         v = np.linspace(0, np.pi / 2, 20)  
         x = dome_radius * np.outer(np.cos(u), np.sin(v))
         y = dome_radius * np.outer(np.sin(u), np.sin(v))
-        z = -dome_radius * np.outer(np.ones_like(u), np.cos(v))
+        z = -dome_radius * np.outer(np.ones_like(u), np.cos(v)) + dome_center_z
         fig.add_trace(go.Surface(
             x=x,
             y=y,
