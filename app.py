@@ -253,7 +253,6 @@ if st.session_state['calculated']:
         sun_vec_scaled = sun_vector_in_scene * axis_len * 1.5
         fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
         
-        ORBIT_ALT = 550
         EARTH_SCALE = 5.0
         earth_radius = np.max(SAT_DIMS) * 8 * EARTH_SCALE
         earth_center = np.array([0, 0, -earth_radius * 2.5])
@@ -267,9 +266,9 @@ if st.session_state['calculated']:
         )
         fig.add_trace(
             go.Scatter3d(
-                x=[0, earth_center[0] * scene_scale],
-                y=[0, earth_center[1] * scene_scale],
-                z=[0, earth_center[2] * scene_scale],
+                x=[0, earth_center[0]],
+                y=[0, earth_center[1]],
+                z=[0, earth_center[2]],
                 mode='lines',
                 line=dict(color='white', width=2, dash='dash'),
                 showlegend=False
