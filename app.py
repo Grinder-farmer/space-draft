@@ -121,12 +121,33 @@ else:
 target_angle = st.sidebar.slider("Желаемый угол Солнце-Надир (°)", 0.0, 180.0, 20.0)
 
 st.sidebar.subheader("Токи солнечных батарей (А)")
-i1 = st.sidebar.number_input("Ток СБ №1", value=0.14, step=0.01)
-i2 = st.sidebar.number_input("Ток СБ №2", value=0.04, step=0.01)
-i3 = st.sidebar.number_input("Ток СБ №3", value=0.04, step=0.01)
 
-I_sb_current = {1: i1, 2: i2, 3: i3}
-I_max_panel = {1: 0.15, 2: 0.15, 3: 0.15}
+i_px = st.sidebar.number_input("Ток панели +X", value=0.14, step=0.01)
+i_nx = st.sidebar.number_input("Ток панели -X", value=0.01, step=0.01)
+
+i_py = st.sidebar.number_input("Ток панели +Y", value=0.04, step=0.01)
+i_ny = st.sidebar.number_input("Ток панели -Y", value=0.01, step=0.01)
+
+i_pz = st.sidebar.number_input("Ток панели +Z", value=0.04, step=0.01)
+i_nz = st.sidebar.number_input("Ток панели -Z", value=0.01, step=0.01)
+
+I_sb_current = {
+    1: i_px,
+    2: i_nx,
+    3: i_py,
+    4: i_ny,
+    5: i_pz,
+    6: i_nz
+}
+
+I_max_panel = {
+    1: 0.15,
+    2: 0.15,
+    3: 0.15,
+    4: 0.15,
+    5: 0.15,
+    6: 0.15
+}
 SAT_DIMS = np.array([0.1, 0.1, 0.2])
 
 if 'calculated' not in st.session_state:
@@ -142,134 +163,220 @@ if st.sidebar.button("Запустить симуляцию") or not st.session_
         
         st.session_state['global_vectors'] = (s_sun_global, nadir_global)
         
-        found_hypotheses = []
-        possible_axes = {"+X":np.array([1,0,0]),"-X":np.array([-1,0,0]),
-                         "+Y":np.array([0,1,0]),"-Y":np.array([0,-1,0]),
-                         "+Z":np.array([0,0,1]),"-Z":np.array([0,0,-1])}
-        
-        panel_ids = sorted(list(I_sb_current.keys()))
-        face_names = list(possible_axes.keys())
+        panel_config = {
+            1: np.array([ 1,  0,  0]),  # +X
+            2: np.array([-1,  0,  0]),  # -X
 
-        # for nadir_axis_name, nadir_axis_vec in possible_axes.items():
-        nadir_axis_name = "+X"
-        nadir_axis_vec = np.array([1, 0, 0])
-        for panel_face_indices in itertools.permutations(range(len(face_names)), len(panel_ids)):
-                
-            panel_config_hyp = {pid: possible_axes[face_names[face_idx]] for pid, face_idx in zip(panel_ids, panel_face_indices)}
-                
-            impossible_physics = False
-            current_threshold = 0.005 
-                
-            active_panels_list = []
-            for pid, vec in panel_config_hyp.items():
-                if I_sb_current[pid] > current_threshold:
-                    active_panels_list.append(vec)
-                
-            for v1 in active_panels_list:
-                for v2 in active_panels_list:
-                    if np.dot(v1, v2) < -0.9: 
-                        impossible_physics = True
-                        break
-                if impossible_physics: break
-                
-            if impossible_physics:
-                continue 
+            3: np.array([ 0,  1,  0]),  # +Y
+            4: np.array([ 0, -1,  0]),  # -Y
 
-            try:
-                s_sun_body_hyp = solve_sun_vector_body(I_sb_current, I_max_panel, panel_config_hyp)
-                if s_sun_body_hyp is None: continue
-                attitude_matrix_hyp = calculate_attitude_triad_final(nadir_axis_vec, s_sun_body_hyp, nadir_global, s_sun_global)
-                s_sun_global_in_body = attitude_matrix_hyp.T @ s_sun_global
-                consistency_score = np.dot(s_sun_body_hyp, s_sun_global_in_body)
-                    
-                if consistency_score > 0.98:
-                    config_desc = f"Надир:{nadir_axis_name} | Панели:" + ",".join([f"{face_names[idx]}" for idx in panel_face_indices])
-                        
-                    found_hypotheses.append({
-                        'score': consistency_score,
-                        'attitude': attitude_matrix_hyp,
-                        'nadir_axis': nadir_axis_name,
-                        'panel_config': panel_config_hyp,
-                        'desc_full': config_desc,
-                        'desc_short': f"Надир: {nadir_axis_name} | Панели: " + ", ".join([face_names[idx] for idx in panel_face_indices])
-                    })
-            except ValueError:
-                continue
-        
-        unique_hypotheses = []
-        seen_configs = set()
-        for h in sorted(found_hypotheses, key=lambda x: x['score'], reverse=True):
-            if h['desc_full'] not in seen_configs:
-                unique_hypotheses.append(h)
-                seen_configs.add(h['desc_full'])
-            if len(unique_hypotheses) >= 15: break 
-            
-        st.session_state['hypotheses'] = unique_hypotheses
+            5: np.array([ 0,  0,  1]),  # +Z
+            6: np.array([ 0,  0, -1])   # -Z
+        }
+
+        try:
+
+            s_sun_body = solve_sun_vector_body(
+                I_sb_current,
+                I_max_panel,
+                panel_config
+            )
+
+            if s_sun_body is None:
+                st.error("Не удалось восстановить Sun vector")
+                st.stop()
+
+            nadir_axis_vec = np.array([1, 0, 0])
+
+            attitude_matrix = calculate_attitude_triad_final(
+                nadir_axis_vec,
+                s_sun_body,
+                nadir_global,
+                s_sun_global
+            )
+
+            st.session_state['attitude_matrix'] = attitude_matrix
+            st.session_state['panel_config'] = panel_config
+
+        except ValueError:
+            st.error("Ошибка TRIAD: коллинеарные векторы")
 
 if st.session_state['calculated']:
-    hypotheses = st.session_state['hypotheses']
-    
-    if not hypotheses:
-        st.error("Не удалось найти физически возможную ориентацию (проверьте токи).")
-    else:
-        st.info(f"Найдено {len(hypotheses)} возможных вариантов.")
-        options = [f"{h['desc_short']} (Score: {h['score']:.4f})" for i, h in enumerate(hypotheses)]
-        selected_option_str = st.selectbox("Выберите вариант:", options)
-        
-        selected_index = options.index(selected_option_str)
-        best_hyp = hypotheses[selected_index]
-        s_sun_global, nadir_global = st.session_state['global_vectors']
+    attitude_matrix = st.session_state['attitude_matrix']
+    panel_config = st.session_state['panel_config']
+    s_sun_global, nadir_global = st.session_state['global_vectors']
+    SCENE_DOWN_VECTOR = np.array([0.0, 0.0, -1.0])
+    scene_alignment_rotation, _ = R.align_vectors(
+        SCENE_DOWN_VECTOR,
+        nadir_global
+    )
+    scene_alignment_matrix = scene_alignment_rotation.as_matrix()
 
-        attitude_matrix = best_hyp['attitude']
-        panel_config = best_hyp['panel_config']
-        
-        SCENE_DOWN_VECTOR = np.array([0.0, 0.0, -1.0])
-        scene_alignment_rotation, _ = R.align_vectors(SCENE_DOWN_VECTOR, nadir_global)
-        scene_alignment_matrix = scene_alignment_rotation.as_matrix()
-        final_transform_matrix = scene_alignment_matrix @ attitude_matrix
-        sun_vector_in_scene = scene_alignment_matrix @ s_sun_global
-        
-        fig = go.Figure()
-        fig.add_trace(create_cube_mesh(np.array([0,0,0]), SAT_DIMS, final_transform_matrix, 'firebrick', name='Спутник'))
-        
-        margin, thickness = 0.95, 0.005
-        for _, normal_vec in panel_config.items():
-            axis_idx = np.where(np.abs(normal_vec) > 0.5)[0][0]
-            p_dims = SAT_DIMS.copy()
-            p_dims[axis_idx] = thickness
-            mask = np.ones(3, dtype=bool); mask[axis_idx] = False
-            p_dims[mask] *= margin
-            offset_vec = normal_vec * (SAT_DIMS[axis_idx] / 2)
-            center_pos = final_transform_matrix @ offset_vec
-            fig.add_trace(create_cube_mesh(center_pos, p_dims, final_transform_matrix, 'deepskyblue', name='Панель'))
+    final_transform_matrix = (
+        scene_alignment_matrix @ attitude_matrix
+    )
+    sun_vector_in_scene = (
+        scene_alignment_matrix @ s_sun_global
+    )
+    fig = go.Figure()
+    fig.add_trace(
+        create_cube_mesh(
+            np.array([0,0,0]),
+            SAT_DIMS,
+            final_transform_matrix,
+            'firebrick',
+            name='Спутник'
+        )
+    )
+    margin = 0.95
+    thickness = 0.005
+    for _, normal_vec in panel_config.items():
 
-        axis_len = np.max(SAT_DIMS) * 2.0
-        colors, labels = ['red', 'green', 'blue'], ['+X', '+Y', '+Z']
-        for i in range(3):
-            vec = np.zeros(3); vec[i] = 1.0
-            transformed_vec = final_transform_matrix @ vec * axis_len
-            fig.add_trace(go.Scatter3d(x=[0, transformed_vec[0]], y=[0, transformed_vec[1]], z=[0, transformed_vec[2]], mode='lines+text', line=dict(color=colors[i], width=5), text=["", labels[i]], showlegend=False))
+        axis_idx = np.where(
+            np.abs(normal_vec) > 0.5
+        )[0][0]
 
-        sun_vec_scaled = sun_vector_in_scene * axis_len * 1.5
-        fig.add_trace(go.Scatter3d(x=[0, sun_vec_scaled[0]], y=[0, sun_vec_scaled[1]], z=[0, sun_vec_scaled[2]], mode='lines+text', line=dict(color='yellow', width=6), text=["", "SUN"], name="SUN"))
+        p_dims = SAT_DIMS.copy()
 
-        earth_dist = np.max(SAT_DIMS) * 8
-        earth_radius = np.max(SAT_DIMS) * 3
-        earth_center = np.array([0, 0, -earth_dist])
-        fig.add_trace(create_earth_sphere(earth_center, earth_radius))
-        fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, -earth_dist], mode='lines', line=dict(color='white', width=2, dash='dash'), showlegend=False))
+        p_dims[axis_idx] = thickness
 
-        max_range = earth_dist + earth_radius + np.max(SAT_DIMS)
-        fig.update_layout(
-    scene=dict(
-        xaxis=dict(range=[-max_range, max_range], visible=False),
-        yaxis=dict(range=[-max_range, max_range], visible=False),
-        zaxis=dict(range=[-max_range, max_range], visible=False),
-        aspectmode='cube',
-        bgcolor='black'
-    ),
-    margin=dict(l=0, r=0, b=0, t=0),
-    height=700
-)
+        mask = np.ones(3, dtype=bool)
+        mask[axis_idx] = False
 
-        st.plotly_chart(fig, use_container_width=True)
+        p_dims[mask] *= margin
+
+        offset_vec = (
+            normal_vec *
+            (SAT_DIMS[axis_idx] / 2)
+        )
+
+        center_pos = (
+            final_transform_matrix @ offset_vec
+        )
+
+        fig.add_trace(
+            create_cube_mesh(
+                center_pos,
+                p_dims,
+                final_transform_matrix,
+                'deepskyblue',
+                name='Панель'
+            )
+        )
+    axis_len = np.max(SAT_DIMS) * 2.0
+    colors = ['red', 'green', 'blue']
+    labels = ['+X', '+Y', '+Z']
+    for i in range(3):
+
+        vec = np.zeros(3)
+        vec[i] = 1.0
+
+        transformed_vec = (
+            final_transform_matrix @ vec * axis_len
+        )
+
+        fig.add_trace(
+            go.Scatter3d(
+                x=[0, transformed_vec[0]],
+                y=[0, transformed_vec[1]],
+                z=[0, transformed_vec[2]],
+                mode='lines+text',
+                line=dict(
+                    color=colors[i],
+                    width=5
+                ),
+                text=["", labels[i]],
+                showlegend=False
+            )
+        )
+    sun_vec_scaled = (
+        sun_vector_in_scene *
+        axis_len * 1.5
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0, sun_vec_scaled[0]],
+            y=[0, sun_vec_scaled[1]],
+            z=[0, sun_vec_scaled[2]],
+            mode='lines+text',
+            line=dict(
+                color='yellow',
+                width=6
+            ),
+            text=["", "SUN"],
+            name="SUN"
+        )
+    )
+    earth_dist = np.max(SAT_DIMS) * 8
+    earth_radius = np.max(SAT_DIMS) * 3
+    earth_center = np.array([
+        0,
+        0,
+        -earth_dist
+    ])
+
+    fig.add_trace(
+        create_earth_sphere(
+            earth_center,
+            earth_radius
+        )
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0, 0],
+            y=[0, 0],
+            z=[0, -earth_dist],
+            mode='lines',
+            line=dict(
+                color='white',
+                width=2,
+                dash='dash'
+            ),
+            showlegend=False
+        )
+    )
+    max_range = (
+        earth_dist +
+        earth_radius +
+        np.max(SAT_DIMS)
+    )
+
+    fig.update_layout(
+
+        scene=dict(
+
+            xaxis=dict(
+                range=[-max_range, max_range],
+                visible=False
+            ),
+
+            yaxis=dict(
+                range=[-max_range, max_range],
+                visible=False
+            ),
+
+            zaxis=dict(
+                range=[-max_range, max_range],
+                visible=False
+            ),
+
+            aspectmode='cube',
+
+            bgcolor='black'
+        ),
+
+        margin=dict(
+            l=0,
+            r=0,
+            b=0,
+            t=0
+        ),
+
+        height=700
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
