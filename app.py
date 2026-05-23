@@ -129,7 +129,7 @@ else:
     dt_val = dt_datetime.combine(d, t).replace(tzinfo=timezone.utc)
     time_utc = ts.from_datetime(dt_val)
 
-target_angle = st.sidebar.slider("Желаемый угол Солнце-Надир (°)", 0.0, 180.0, 20.0)
+target_angle = st.sidebar.slider("Желаемый угол Солнце-Надир (°)", 0.0, 180.0, 35.0)
 
 st.sidebar.subheader("Токи солнечных батарей (А)")
 i1 = st.sidebar.number_input("Ток СБ №1", value=0.14, step=0.01)
