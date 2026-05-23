@@ -24,9 +24,20 @@ def solve_sun_vector_body(I_sb, I_max, n_panels):
     active_panels = 0
     for i, n_vec in n_panels.items():
         if (max_i := I_max.get(i, 1.0)) > 1e-6:
-            cos_alpha = np.clip(I_sb.get(i, 0.0) / max_i, 0.0, 1.0)
-            if cos_alpha > 1e-3:
-                s_sun_un += n_vec * cos_alpha
+            cos_alpha = np.sqrt(np.clip(I_sb.get(i, 0.0) / max_i, 0.0, 1.0))
+            if I_sb.get(i, 0.0) > 0:
+                weights = []
+                s_sun_un = np.zeros(3)
+                for i, n_vec in n_panels.items():
+                    I = I_sb.get(i, 0.0)
+                    if I > 0:
+                        w = np.sqrt(I / I_max[i])
+                        s_sun_un += n_vec * w
+                        weights.append(w)
+                if len(weights) == 0:
+                    return None
+
+                s_sun_un /= np.sum(weights)
                 active_panels += 1
     if active_panels == 0:
         return None
